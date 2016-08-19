@@ -12,7 +12,7 @@ import robos
 class CalibrateTest(unittest.TestCase):
     def test_find(self):
         obj = CalibrateObject()
-        obj.set_frame(cv2.imread('../test3.png'))
+        obj.set_frame(cv2.imread('../test.png'))
         obj.prepare_image()
         obj.read_points()
 
@@ -41,7 +41,7 @@ class CalibrateObject():
     def set_frame(self, frame):
         self.frame = frame
         self.hsv = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
-        tmin = np.array([0,37,121])
+        tmin = np.array([0,28,64])
         tmax = np.array([255,255,255])
         self.thsv = cv2.inRange(self.hsv,tmin,tmax)
         self.hsv = cv2.bitwise_and(self.hsv,self.hsv,mask=self.thsv)
@@ -271,72 +271,6 @@ class CalibrateObject():
                 sair = True
 
 
-
-class CalibrateObjectCluster():
-    def __init__(self):
-        self.centers = None
-        self.frame = None
-        self.mouse_click = None
-        self.square_train = 20
-        self.n_clusters = 3
-        self.hsv = None
-        self.clicked = False
-
-    def set_frame(self,frame):
-        self.frame = frame
-
-    def mouse_callback(self,event,x,y,flags,param):
-        if event == cv2.EVENT_LBUTTONDOWN:
-            self.mouse_click = (x,y)
-            print x,y
-            print self.frame[y][x]
-            self.clicked = True
-
-        
-    def read_position(self): 
-        cv2.namedWindow('readpos')
-        cv2.setMouseCallback('readpos',self.mouse_callback)
-        cv2.imshow('readpos',self.frame)
-
-
-    def find_clusters(self):
-        (x,y) = self.mouse_click
-        point = self.frame[y][x]
-        instances = []
-        self.hsv = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
-        for j in range(x-self.square_train,x+self.square_train):
-            for i in range(y-self.square_train,y+self.square_train):
-                instances.append(self.hsv[i][j])
-        self.kmeans = KMeans(n_clusters=self.n_clusters)
-        self.kmeans.fit(instances)
-    def show_clusters(self):
-        (x,y) = self.mouse_click
-        img = np.zeros(self.hsv.shape,np.uint8)
-        img.fill(255)
-        colors = [(0,0,255),(255,0,0),(0,255,0),(128,128,128)]
-        instances = []
-        centers = self.kmeans.cluster_centers_
-        for j in range(x-self.square_train,x+self.square_train):
-            for i in range(y-self.square_train,y+self.square_train):
-                instance = self.hsv[i][j]
-                dist = float('inf')
-                selected_color = 0
-                for k in range(len(centers)):
-                    center = centers[k]
-                    d = scipy.spatial.distance.euclidean(center, instance)
-                    print d,k
-                    if d < dist:
-                        dist = d
-                        selected_color = k
-                self.frame[i][j] = colors[selected_color]
-                print 'selected',selected_color
-                k+=1
-        cv2.imshow('result',self.frame)
-        cv2.waitKey(0)
-
-
-        
-           
 
 if __name__ == '__main__':
     unittest.main()

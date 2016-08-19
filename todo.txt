@@ -1,0 +1,3 @@
+gerenciamento da configuração
+definir bordas
+encontrar robos
