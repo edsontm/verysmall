@@ -101,8 +101,8 @@ class CalibrateObject():
 
      #   ret,markers = cv2.connectedComponent
 
-        #cv2.namedWindow('teste')
-        #cv2.imshow('teste',img)
+        cv2.namedWindow('teste')
+        cv2.imshow('teste',imgt)
 
 
 
@@ -124,8 +124,9 @@ class CalibrateObject():
 
         #components = cv2.bitwise_and(gray,sure_fg)
 
-        print img
-        im2, contours, hierarchy = cv2.findContours(imgt, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        #print img
+        #im2, contours, hierarchy = cv2.findContours(imgt, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, hierarchy = cv2.findContours(imgt, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         print "contour %d"%(len(contours))
         hsv = self.hsv
