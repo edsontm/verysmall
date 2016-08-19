@@ -49,7 +49,10 @@ class Parameters:
     def load(self):
         with open(self.file_name, 'r') as f:
             data = json.load(f)
-
+            self.file_name = data['file_name']
+            self.robo_cores = data['robo_cores']
+            self.limites = data['limites']
+            print "limites",self.limites[0]+1
 
 
 
