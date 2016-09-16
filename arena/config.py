@@ -1,11 +1,12 @@
 import unittest
 import numpy as np
 import json
-
+import os
+import copy
 
 class test(unittest.TestCase):
     def test_parameters(self):
-        obj = Parameters()
+        obj = LIAParameters()
         for num in range(0,10):
             min = [0,0,0]
             max = [255,255,255]
@@ -21,38 +22,53 @@ class test(unittest.TestCase):
         print json.dumps(obj.robo_cores)
         obj.save()
     def test_load(self):
-        obj = Parameters()
+        obj = LIAParameters()
         obj.load()
 
 def jdefault(o):
     return o.__dict__
 
-class Parameters:
+class LIAParameters:
     def __init__(self):
         self.file_name = 'params.json'
         self.robo_cores = [None]*10
         self.limites = None
+        self.thsv_limites = None
+        if os.path.isfile(self.file_name):
+            self.load()
+
 
     def robo_cor(self,num,cores=None):
         if cores != None:
-            self.robo_cores[num] = cores
-
+            self.robo_cores[num] = copy.copy(cores)
         return self.robo_cores[num]
+
     def limites_crop(self,limites = None):
         if limites != None:
             self.limites = limites
-        return limites
+        return self.limites
+
+    def limites_thsv(self,limites):
+        if limites != None:
+            self.thsv_limites = limites
+        return self.thsv_limites
+
+
     def save(self):
-        with open(self.file_name, 'w') as f:
-            json.dump(self, f,default=jdefault)
+        f = open(self.file_name, 'w')
+        json.dump(self.__dict__,f)
+        f.close()
+
+#    json.dump(self, f, default=jdefault)
 
     def load(self):
         with open(self.file_name, 'r') as f:
             data = json.load(f)
-            self.file_name = data['file_name']
-            self.robo_cores = data['robo_cores']
-            self.limites = data['limites']
-            print "limites",self.limites[0]+1
+            self.file_name    = data['file_name']
+            self.robo_cores   = data['robo_cores']
+            self.limites      = data['limites']
+            self.thsv_limites = data['thsv_limites']
+
 
 
 

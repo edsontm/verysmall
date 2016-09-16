@@ -1,5 +1,2 @@
-__all__ = ['calibrate','detectposition','robos']
+__all__ = ['calibrate','detectposition','robos','config']
 
-# plano de ação
-# encontrar as cores
-#

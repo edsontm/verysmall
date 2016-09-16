@@ -7,7 +7,8 @@ import numpy as np
 
 cv2.namedWindow('main')
 
-cap = cv2.VideoCapture('output.avi')
+#cap = cv2.VideoCapture('output.avi')
+cap = cv2.VideoCapture(1)
 
 
 while(cap.isOpened()):
