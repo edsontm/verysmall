@@ -27,6 +27,7 @@ class SeekRobots():
         self.crop = Cropper()
         self.p = LIAParameters()
         self.crop.crop_coordinates = self.p.limites
+        self.vrobo_pos = [None]*10
 
 
     def set_frame(self, frame):
@@ -42,7 +43,10 @@ class SeekRobots():
         tmin = np.array(self.p.robo_cores[0][0])
         tmax = np.array(self.p.robo_cores[0][1])
         thsv = cv2.inRange(self.hsv, tmin, tmax)
-        im2,contours, hierarchy = cv2.findContours(thsv,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        if cv2.__version__ < '3':
+            contours, hierarchy = cv2.findContours(thsv,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        else:
+            im2,contours, hierarchy = cv2.findContours(thsv,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
         for cnt in contours:
             lcnt = float(len(cnt))
@@ -57,8 +61,12 @@ class SeekRobots():
                 ty = (int(ly/lcnt))
                 cv2.circle(self.frame,(tx,ty),5,(0,255,0),thickness=-1)
                 cv2.putText(self.frame, 'bola', (tx,ty), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+                self.vrobo_pos[0] = [tx,ty]
 
-
+    def robo_pos(self,n):
+        return self.vrobo_pos[n]
+    def ball_pos(self):
+        return self.vrobo_pos[0]
         
 
     def home_team(self):
@@ -70,8 +78,12 @@ class SeekRobots():
         tmax = np.array(self.p.robo_cores[1][1])
         thsv = cv2.inRange(self.hsv, tmin, tmax)
 
+        if cv2.__version__ < '3':
+            contours, hierarchy = cv2.findContours(thsv,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        else:
+            im2,contours, hierarchy = cv2.findContours(thsv,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
-        im2,contours, hierarchy = cv2.findContours(thsv,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+
         rcenters = []
         # pega cor do time
         for cnt in contours:
@@ -114,53 +126,59 @@ class SeekRobots():
                 tmax = np.array(self.p.robo_cores[nrobo][1])
                 robo = cv2.inRange(patch, tmin, tmax)
                 mask = cv2.inRange(self.hsv, tmin, tmax)
-                cv2.imshow('saida1', mask)
-                cv2.imshow('saida2',robo)
-                cv2.imshow('patch',patchrgb)
-                #cv2.waitKey(0)
-                im2,contours, hierarchy = cv2.findContours(robo, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                if type(robo) != type(None):
+                    (w,h) = robo.shape
+                    if w>0 and h>0:
+                        cv2.imshow('saida1', mask)
+                        cv2.imshow('saida2',robo)
+                        cv2.imshow('patch',patchrgb)
+                        #cv2.waitKey(0)
+
+                        if cv2.__version__ < '3':
+                            contours, hierarchy = cv2.findContours(robo,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+                        else:
+                            im2,contours, hierarchy = cv2.findContours(robo,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
 
+                        maxcnt = 0
+                        selectedcnt = None
+                        for cnt in contours:
+                            lcnt = len(cnt)
+                            if lcnt >maxcnt:
+                                maxcnt = lcnt
+                                selectedcnt = cnt
+                        lx = 0
+                        ly = 0
+                        #print maxcnt
+                        if maxcnt >= 1:
+                            lcnt = float(maxcnt)
+                            #print maxcnt
+                            for tpoint in selectedcnt:
+                                (tx, ty) = tpoint[0]
+                                #if tx > x1 and tx < x2:
+                                #    if ty > y1 and ty < y2:
+                                lx += tx 
+                                ly += ty
+                            crobot[nrobo] += maxcnt
+                            tx = (int(lx / lcnt)) + x1
+                            ty = (int(ly / lcnt)) + y1
+                            dist = abs(rcenter[0] - tx) + abs(rcenter[1] - ty)
+                            #if dist > 5  and dist < 20:
+                            crobot_pos[nrobo] = (tx,ty)
+                            achou = True
+                            cv2.drawContours(robo, [selectedcnt], 0, (0, 255, 0), 3)
+                            cv2.imshow('saida', robo)
+                        if achou:
+                            srobot = np.argmax(crobot)
+                            #print crobot
+                            #print srobot
 
+                            cv2.putText(self.frame, '%d' % (srobot), crobot_pos[srobot], cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+                            cv2.circle(self.frame, crobot_pos[srobot], 5, (0, 0, 255), thickness=-1)
+                            self.vrobo_pos[srobot] = crobot_pos[srobot]
 
-                maxcnt = 0
-                selectedcnt = None
-                for cnt in contours:
-                    lcnt = len(cnt)
-                    if lcnt >maxcnt:
-                        maxcnt = lcnt
-                        selectedcnt = cnt
-                lx = 0
-                ly = 0
-                #print maxcnt
-                if maxcnt >= 1:
-                    lcnt = float(maxcnt)
-                    #print maxcnt
-                    for tpoint in selectedcnt:
-                        (tx, ty) = tpoint[0]
-                        #if tx > x1 and tx < x2:
-                        #    if ty > y1 and ty < y2:
-                        lx += tx 
-                        ly += ty
-                    crobot[nrobo] += maxcnt
-                    tx = (int(lx / lcnt)) + x1
-                    ty = (int(ly / lcnt)) + y1
-                    dist = abs(rcenter[0] - tx) + abs(rcenter[1] - ty)
-                    #if dist > 5  and dist < 20:
-                    crobot_pos[nrobo] = (tx,ty)
-                    achou = True
-                    cv2.drawContours(robo, [selectedcnt], 0, (0, 255, 0), 3)
-                    cv2.imshow('saida', robo)
-            if achou:
-                srobot = np.argmax(crobot)
-                #print crobot
-                #print srobot
-
-                cv2.putText(self.frame, '%d' % (srobot), crobot_pos[srobot], cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
-                cv2.circle(self.frame, crobot_pos[srobot], 5, (0, 0, 255), thickness=-1)
-
-            # robo2
-            # robo3
+                    # robo2
+                    # robo3
 
 
 
