@@ -175,6 +175,11 @@ class SeekRobots():
 
                             cv2.putText(self.frame, '%d' % (srobot), crobot_pos[srobot], cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                             cv2.circle(self.frame, crobot_pos[srobot], 5, (0, 0, 255), thickness=-1)
+                            dx = rcenter[0] - crobot_pos[srobot][0]
+                            dy = rcenter[1] - crobot_pos[srobot][1]
+                            cx = dx-dy
+                            cy = dx+dy
+                            cv2.line(self.frame,(rcenter[0],rcenter[1]),(cx,cy), (0,0,255),1)
                             self.vrobo_pos[srobot] = crobot_pos[srobot]
 
                     # robo2
