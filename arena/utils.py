@@ -23,12 +23,33 @@ class Region():
 
 class SeekRobots():
     def __init__(self):
+        self.nrobos = 10
         self.frame = None
         self.crop = Cropper()
         self.p = LIAParameters()
         self.crop.crop_coordinates = self.p.limites
-        self.vrobo_pos = [None]*10
+        self.vrobo_pos = [None]*self.nrobos
+        self.__init_kalman__()
+        
+    def __init_kalman__(self):
+        self.kf = []
+        for i in range(self.nrobos):
 
+            kalman = cv2.KalmanFilter(4,2)
+            kalman.measurementMatrix = np.array([[1,0,0,0],[0,1,0,0]],np.float32)
+            kalman.transitionMatrix = np.array([[1,0,1,0],[0,1,0,1],[0,0,1,0],[0,0,0,1]],np.float32)
+            kalman.processNoiseCov = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],np.float32) * 0.005
+            kalman.measurementNoiseCov = np.array([[1,0],[0,1]],np.float32) * 0.1
+            self.kf.append(kalman)
+
+    def kalman(self,n,x,y):
+        mp = np.array([[np.float32(x)],[np.float32(y)]])
+        self.kf[n].correct(mp)
+        tp = self.kf[n].predict()
+        rx = int(tp[0])
+        ry = int(tp[1])
+        return rx,ry
+        
 
     def set_frame(self, frame):
         self.frame = self.crop.crop(frame)
@@ -59,6 +80,7 @@ class SeekRobots():
                     ly += ty
                 tx = (int(lx/lcnt))
                 ty = (int(ly/lcnt))
+                tx,ty = self.kalman(0,tx,ty)
                 cv2.circle(self.frame,(tx,ty),5,(0,255,0),thickness=-1)
                 cv2.putText(self.frame, 'bola', (tx,ty), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                 self.vrobo_pos[0] = [tx,ty]
@@ -164,6 +186,7 @@ class SeekRobots():
                             ty = (int(ly / lcnt)) + y1
                             dist = abs(rcenter[0] - tx) + abs(rcenter[1] - ty)
                             #if dist > 5  and dist < 20:
+                            tx,ty = self.kalman(nrobo,tx,ty)
                             crobot_pos[nrobo] = (tx,ty)
                             achou = True
                             cv2.drawContours(robo, [selectedcnt], 0, (0, 255, 0), 3)
